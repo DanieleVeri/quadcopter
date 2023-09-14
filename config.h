@@ -70,19 +70,17 @@
 
 
 // Motor pins
-#define PIN_MOTOR_0  2
-#define PIN_MOTOR_1  3
-#define PIN_MOTOR_2  4
-#define PIN_MOTOR_3  5
+#define PIN_MOTOR_0  3
+#define PIN_MOTOR_1  4
+#define PIN_MOTOR_2  5
+#define PIN_MOTOR_3  6
 
 // Radio pins
-#define RX_PIN_ROLL  8     //PCINT2
-#define RX_PIN_PITCH  9    //PCINT3
-#define RX_PIN_YAW  10      //PCINT1
-#define RX_PIN_THROTTLE  11  //INT6
-#define RX_PIN_AUX1  12  //PCINT4
-#define RX_PIN_AUX2  13      //INT2
-#define RX_INT_AUX2  40
-#define RX_INT_THROTTLE 41
+#define RX_PIN_ROLL  19     //PCINT2
+#define RX_PIN_PITCH  18    //PCINT3
+#define RX_PIN_YAW  9      //PCINT1
+#define RX_PIN_THROTTLE  2  //INT6
+#define RX_PIN_AUX1  10  //PCINT4
+#define RX_PIN_AUX2  11      //INT2
 
 #endif
