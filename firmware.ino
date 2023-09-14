@@ -12,15 +12,14 @@ void setup()
     //calib_motors();
     //calib_imu();
     setup_imu();
-    setup_radio();
-    //setup_pid();
+    //setup_radio();
+    register_radio_interrupt();
 }
 
 int i = 0;
 void loop()
 {
-  if (i++ % 10 == 0)
+
       debug_radio();
-    else
       debug_imu();
 }

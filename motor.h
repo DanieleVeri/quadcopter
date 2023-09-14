@@ -12,5 +12,6 @@ void display_calib_instructions();
 void setup_motors(); 
 void calib_motors();
 void arm_motors();
+void set_motor_values(int v1, int v2, int v3, int v4);
 
 #endif

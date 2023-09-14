@@ -80,3 +80,11 @@ void arm_motors()
     mot2.writeMicroseconds(MIN_PULSE_LENGTH);
     mot3.writeMicroseconds(MIN_PULSE_LENGTH);
 }
+
+void set_motor_values(int v1, int v2, int v3, int v4)
+{
+    mot0.writeMicroseconds(v1);
+    mot1.writeMicroseconds(v2);
+    mot2.writeMicroseconds(v3);
+    mot3.writeMicroseconds(v4);
+}

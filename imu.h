@@ -12,4 +12,10 @@ void print_roll_pitch_yaw();
 
 void debug_imu(); 
 
+float get_roll();
+
+float get_yaw();
+
+float get_pitch();
+
 #endif

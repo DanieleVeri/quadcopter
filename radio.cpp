@@ -1,6 +1,60 @@
 #include "radio.h"
 
-void setup_radio()
+
+static volatile int rx_st[6] {0,0,0,0,0,0};
+
+static int pin_map[6] = {
+    RX_PIN_ROLL,
+    RX_PIN_PITCH,
+    RX_PIN_YAW,
+    RX_PIN_THROTTLE,
+    RX_PIN_AUX1,
+    RX_PIN_AUX2
+};
+
+int readChannel(int channelInput, int minLimit, int maxLimit, int defaultValue)
+{
+    int ch = pulseIn(channelInput, HIGH, 30000);
+    if (ch < 100) return defaultValue;
+    return map(ch, 1000, 2000, minLimit, maxLimit);
+}
+
+void debug_radio()
+{
+    static uint32_t prev_ms = millis();
+    if (millis() - prev_ms < 1000) 
+        return;
+    prev_ms = millis();
+    Serial.println("radio channels");
+    rx_val[3] = readChannel(RX_PIN_THROTTLE, -100, 100, 0);
+    for (int i = 0; i < 6; i++)
+    {
+        Serial.println(rx_val[i]);
+    }
+}
+
+template<unsigned int CH>
+void int_signal_rising();
+
+template<unsigned int CH>
+void int_signal_falling();
+
+
+template<unsigned int CH>
+void int_signal_rising()
+{    
+    attachInterrupt(digitalPinToInterrupt(pin_map[CH]), int_signal_falling<CH>, FALLING);
+    rx_st[CH] = micros();
+}
+
+template<unsigned int CH>
+void int_signal_falling()
+{    
+    attachInterrupt(digitalPinToInterrupt(pin_map[CH]), int_signal_rising<CH>, RISING);
+    rx_val[CH] = micros() - rx_st[CH];    
+}
+
+void register_radio_interrupt()
 {
     pinMode(RX_PIN_ROLL, INPUT);
     pinMode(RX_PIN_PITCH, INPUT);
@@ -8,33 +62,8 @@ void setup_radio()
     pinMode(RX_PIN_THROTTLE, INPUT);
     pinMode(RX_PIN_AUX1, INPUT);
     pinMode(RX_PIN_AUX2, INPUT);
-}
 
-int readChannel(int channelInput, int minLimit, int maxLimit, int defaultValue){
-  int ch = pulseIn(channelInput, HIGH, 30000);
-  if (ch < 100) return defaultValue;
-  return map(ch, 1000, 2000, minLimit, maxLimit);
-}
-
-void debug_radio()
-{
-    int ch1Value = readChannel(RX_PIN_ROLL, -100, 100, 0);
-    int ch2Value = readChannel(RX_PIN_PITCH, -100, 100, 0);
-    int ch3Value = readChannel(RX_PIN_YAW, -100, 100, -100);
-    int ch4Value = readChannel(RX_PIN_THROTTLE, -100, 100, 0);
-    int ch5Value = readChannel(RX_PIN_AUX1, -100, 100, 0);
-    int ch6Value = readChannel(RX_PIN_AUX2, -100, 100, 0);
-    
-    Serial.print("Ch1: ");
-    Serial.print(ch1Value);
-    Serial.print(" | Ch2: ");
-    Serial.print(ch2Value);
-    Serial.print(" | Ch3: ");
-    Serial.print(ch3Value);
-    Serial.print(" | Ch4: ");
-    Serial.print(ch4Value);
-    Serial.print(" | Ch5: ");
-    Serial.print(ch5Value);
-    Serial.print(" | Ch6: ");
-    Serial.println(ch6Value);
+    attachInterrupt(digitalPinToInterrupt(RX_PIN_ROLL), int_signal_rising<0>, RISING);
+    attachInterrupt(digitalPinToInterrupt(RX_PIN_PITCH), int_signal_rising<1>, RISING);
+    attachInterrupt(digitalPinToInterrupt(RX_PIN_YAW), int_signal_rising<2>, RISING);
 }

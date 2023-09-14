@@ -97,3 +97,18 @@ void debug_imu() {
         }
     }
 }
+
+float get_roll() 
+{
+    return mpu.getRoll();
+}
+
+float get_yaw() 
+{
+    return mpu.getYaw();
+}
+
+float get_pitch() 
+{
+    return mpu.getPitch();
+}
