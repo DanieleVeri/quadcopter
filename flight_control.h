@@ -5,4 +5,6 @@
 
 void setup_pid();
 
+void control_loop();
+
 #endif

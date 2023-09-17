@@ -4,22 +4,24 @@
 #include "flight_control.h"
 #include "radio.h"
 
+
 void setup() 
 {
     Serial.begin(115200);
+    
     setup_motors();
     arm_motors();
     //calib_motors();
-    //calib_imu();
+
     setup_imu();
-    //setup_radio();
+    //calib_imu();
+
     register_radio_interrupt();
+
+    setup_pid();
 }
 
-int i = 0;
 void loop()
 {
-
-      debug_radio();
-      debug_imu();
+    control_loop();
 }

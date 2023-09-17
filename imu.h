@@ -8,14 +8,13 @@ void setup_imu();
 
 void calib_imu();
 
-void print_roll_pitch_yaw();
-
 void debug_imu(); 
 
-float get_roll();
+typedef struct 
+{
+  float roll, pitch, yaw;
+}Asset;
 
-float get_yaw();
-
-float get_pitch();
+Asset get_asset();
 
 #endif

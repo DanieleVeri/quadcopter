@@ -1,5 +1,5 @@
 #include "imu.h"
-
+#include "config.h"
 
 static MPU9250 mpu;
 
@@ -98,9 +98,16 @@ void debug_imu() {
     }
 }
 
-float get_roll() 
+static Asset asset;
+
+Asset get_asset() 
 {
-    return mpu.getRoll();
+    if (mpu.update()) {
+      asset.roll = mpu.getPitch() + ROLL_BIAS;
+      asset.pitch = -mpu.getRoll() + PITCH_BIAS;
+      asset.yaw = mpu.getGyroZ() + YAW_BIAS;  // angular velocity
+    }
+    return asset;
 }
 
 float get_yaw() 

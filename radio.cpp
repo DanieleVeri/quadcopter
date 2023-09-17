@@ -1,5 +1,6 @@
 #include "radio.h"
 
+volatile int rx_val[6] {0,0,0,0,0,0};
 
 static volatile int rx_st[6] {0,0,0,0,0,0};
 
@@ -12,13 +13,6 @@ static int pin_map[6] = {
     RX_PIN_AUX2
 };
 
-int readChannel(int channelInput, int minLimit, int maxLimit, int defaultValue)
-{
-    int ch = pulseIn(channelInput, HIGH, 30000);
-    if (ch < 100) return defaultValue;
-    return map(ch, 1000, 2000, minLimit, maxLimit);
-}
-
 void debug_radio()
 {
     static uint32_t prev_ms = millis();
@@ -26,7 +20,6 @@ void debug_radio()
         return;
     prev_ms = millis();
     Serial.println("radio channels");
-    rx_val[3] = readChannel(RX_PIN_THROTTLE, -100, 100, 0);
     for (int i = 0; i < 6; i++)
     {
         Serial.println(rx_val[i]);
@@ -66,4 +59,33 @@ void register_radio_interrupt()
     attachInterrupt(digitalPinToInterrupt(RX_PIN_ROLL), int_signal_rising<0>, RISING);
     attachInterrupt(digitalPinToInterrupt(RX_PIN_PITCH), int_signal_rising<1>, RISING);
     attachInterrupt(digitalPinToInterrupt(RX_PIN_YAW), int_signal_rising<2>, RISING);
+}
+
+void sample_throttle()
+{
+    static uint32_t prev_ms = millis();
+    if (millis() - prev_ms < 100) 
+        return;
+    prev_ms = millis();
+    rx_val[3] = pulseIn(RX_PIN_THROTTLE, HIGH, 30000);
+}
+
+int get_rx_roll()
+{
+    return rx_val[0];
+}
+
+int get_rx_pitch()
+{
+    return rx_val[1];
+}
+
+int get_rx_yaw()
+{
+    return rx_val[2];
+}
+
+int get_rx_throttle()
+{
+    return rx_val[3];
 }
