@@ -2,16 +2,16 @@
 #define CONFIG_H
 
 // Sensor bias
-#define ROLL_BIAS 2
-#define PITCH_BIAS 3.2
+#define ROLL_BIAS 2.5
+#define PITCH_BIAS 4.5
 #define YAW_BIAS -1.2
 
 // Pid config
-#define ROLL_PID_KP  10
-#define ROLL_PID_KI  1
+#define ROLL_PID_KP  20
+#define ROLL_PID_KI  0
 #define ROLL_PID_KD  0
-#define PITCH_PID_KP  15
-#define PITCH_PID_KI  1
+#define PITCH_PID_KP  20
+#define PITCH_PID_KI  0
 #define PITCH_PID_KD  0
 #define YAW_PID_KP  7
 #define YAW_PID_KI  1
