@@ -103,8 +103,8 @@ static Asset asset;
 Asset get_asset() 
 {
     if (mpu.update()) {
-      asset.roll = mpu.getPitch() + ROLL_BIAS;
-      asset.pitch = -mpu.getRoll() + PITCH_BIAS;
+      asset.roll = -mpu.getGyroY() + ROLL_BIAS;
+      asset.pitch = -mpu.getGyroX() + PITCH_BIAS;
       asset.yaw = mpu.getGyroZ() + YAW_BIAS;  // angular velocity
     }
     return asset;
