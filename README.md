@@ -6,7 +6,8 @@
 - Receiver: Flysky FS-IA6 
 - Motor/ESC: A2212 1000KV Brushless Motor 30A ESC 
 - Propeller: 1045
-- Battery: 2700mAh 7.4V 30C LiPo Battery 2S EC2
+- Battery: LiPo 2S 30C EC2 or LiPo 3S 35C XT60
+- DC/DC stepdown: LM7805
 
 ## Requirements
 - MPU9250==0.4.8
