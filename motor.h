@@ -5,13 +5,13 @@
 #include <Servo.h>
 #include "config.h"
 
-#define MIN_PULSE_LENGTH 1000 
+#define MIN_PULSE_LENGTH 1000
 #define MAX_PULSE_LENGTH 2000
 
 void display_calib_instructions();
-void setup_motors(); 
+void setup_motors();
 void calib_motors();
 void arm_motors();
-void set_motor_values(int v1, int v2, int v3, int v4);
+void set_motor_values(int *mixer_output);
 
 #endif

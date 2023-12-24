@@ -8,17 +8,32 @@ void setup_imu();
 
 void calib_imu();
 
-void debug_imu(); 
+void debug_imu();
 
-typedef struct 
-{
-  float roll, pitch, yaw;
-}Asset;
+struct Asset {
+  double roll, pitch, yaw;
+  Asset()
+    : roll(0), pitch(0), yaw(0) {}
 
-float get_yaw();
-float get_pitch();
-float get_roll();
+  void reset() {
+    roll = 0;
+    pitch = 0;
+    yaw = 0;
+  }
 
-Asset get_asset();
+  void print()
+  {
+    Serial.print(roll);
+    Serial.print("    ");
+    Serial.print(pitch);
+    Serial.print("    ");
+    Serial.println(yaw);
+  }
+
+};
+
+Asset get_angles(Asset& angles);
+
+Asset get_rates(Asset& rates);
 
 #endif

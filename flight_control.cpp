@@ -1,164 +1,154 @@
 #include "Arduino.h"
 #include "AutoPID.h"
 #include "flight_control.h"
-
 #include "imu.h"
 #include "radio.h"
 #include "motor.h"
 
 
-struct ControlValues {
-  ControlValues(): 
-    input(0),
-    output(0),
-    set_point(0) 
-  {}
+// State variables
+static Asset angles;
+static Asset rates;
+static Asset filtered_rates;
 
-  double input;
-  double output;
-  double set_point;
-
-  void reset()
-  {
-    input = 0;
-    output = 0;
-    set_point = 0;
-  }
-};
-
-static ControlValues roll;
-static ControlValues pitch;
-static ControlValues roll_F;
-static ControlValues pitch_F;
-static ControlValues yaw;
 static int throttle;
+static Asset angles_setpoint;  // --> radio_input
+static Asset rates_setpoint;   // --> angles_output
 
-static AutoPID PID_roll(&roll.input, &roll.set_point, &roll.output,
-  -OUT_MINMAX, OUT_MINMAX,
-  ROLL_PID_KP,0,0);
+static Asset rates_output;
 
-static AutoPID PID_roll_F(&roll_F.input, &roll_F.set_point, &roll_F.output,
-  -OUT_MINMAX, OUT_MINMAX,
-  ROLL_PID_FKP,ROLL_PID_KI,ROLL_PID_KD);
+static int mixer_output[4];
 
-static AutoPID PID_pitch(&pitch.input, &pitch.set_point, &pitch.output,
- -OUT_MINMAX, OUT_MINMAX,
-  PITCH_PID_KP,0,0);
+// PID controllers
+static AutoPID PID_roll_angle(&angles.roll, &angles_setpoint.roll, &rates_setpoint.roll,
+                             -OUT_MINMAX, OUT_MINMAX,
+                             ROLL_PID_KP, ROLL_PID_KI, ROLL_PID_KD);
 
-static AutoPID PID_pitch_F(&pitch_F.input, &pitch_F.set_point, &pitch_F.output,
- -OUT_MINMAX, OUT_MINMAX,
-  PITCH_PID_FKP,PITCH_PID_KI,PITCH_PID_KD);
+static AutoPID PID_pitch_angle(&angles.pitch, &angles_setpoint.pitch, &rates_setpoint.pitch,
+                              -OUT_MINMAX, OUT_MINMAX,
+                              PITCH_PID_KP, PITCH_PID_KI, PITCH_PID_KD);
 
-static AutoPID PID_yaw(&yaw.input, &yaw.set_point, &yaw.output,
- -OUT_MINMAX, OUT_MINMAX,
-  YAW_PID_KP,YAW_PID_KI,YAW_PID_KD);
+static AutoPID PID_roll_rate(&filtered_rates.roll, &rates_setpoint.roll, &rates_output.roll,
+                             -OUT_MINMAX, OUT_MINMAX,
+                             ROLL_RATE_PID_KP, ROLL_RATE_PID_KI, ROLL_RATE_PID_KD);
 
-void debug_state()
-{
-    Serial.println("input");
-    Serial.print(roll.input);
-    Serial.print(" - ");
-    Serial.println(roll_F.input);
-    Serial.print(pitch.input);
-    Serial.print(" - ");
-    Serial.println(pitch_F.input);
-    Serial.println(yaw.input);
+static AutoPID PID_pitch_rate(&filtered_rates.pitch, &rates_setpoint.pitch, &rates_output.pitch,
+                              -OUT_MINMAX, OUT_MINMAX,
+                              PITCH_RATE_PID_KP, PITCH_RATE_PID_KI, PITCH_RATE_PID_KD);
 
-    Serial.println("setpoint");
-    Serial.println(roll.set_point);
-    Serial.println(pitch.set_point);
-    Serial.println(yaw.set_point);
-    Serial.println(throttle);
+static AutoPID PID_yaw_rate(&filtered_rates.yaw, &rates_setpoint.yaw, &rates_output.yaw,
+                            -OUT_MINMAX, OUT_MINMAX,
+                            YAW_RATE_PID_KP, YAW_RATE_PID_KI, YAW_RATE_PID_KD);
 
-    Serial.println("output");
-    Serial.println(roll.output + roll_F.output);
-    Serial.println(pitch.output + pitch_F.output);
-    Serial.println(yaw.output);
+void setup_pid() {
+  PID_roll_angle.setTimeStep(TIMESTEP);
+  PID_roll_angle.setBangBang(BANGBANG);
+  PID_pitch_angle.setTimeStep(TIMESTEP);
+  PID_pitch_angle.setBangBang(BANGBANG);
+  PID_roll_rate.setTimeStep(TIMESTEP);
+  PID_roll_rate.setBangBang(BANGBANG);
+  PID_pitch_rate.setTimeStep(TIMESTEP);
+  PID_pitch_rate.setBangBang(BANGBANG);
+  PID_yaw_rate.setTimeStep(TIMESTEP);
+  PID_yaw_rate.setBangBang(BANGBANG);
 }
 
-void print_motor_values(int a, int b, int c, int d)
-{
-    static uint32_t prev_ms = millis();
-    static uint32_t ticks = 0;
-    ticks++;
-    if (millis() - prev_ms < 1000) 
-        return;
-    prev_ms = millis();
-    Serial.print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ticks:");
-    Serial.println(ticks);
-    ticks = 0;
-    debug_state();
-    Serial.println("motors");
-    Serial.println(a);
-    Serial.println(b);
-    Serial.println(c);
-    Serial.println(d);
-}
-void setup_pid()
-{
-  PID_roll.setTimeStep(TIMESTEP);
-  PID_roll.setBangBang(BANGBANG);
-  PID_pitch.setTimeStep(TIMESTEP);
-  PID_pitch.setBangBang(BANGBANG);
-  PID_roll_F.setTimeStep(TIMESTEP);
-  PID_roll_F.setBangBang(BANGBANG);
-  PID_pitch_F.setTimeStep(TIMESTEP);
-  PID_pitch_F.setBangBang(BANGBANG);
-  PID_yaw.setTimeStep(TIMESTEP);
-  PID_yaw.setBangBang(BANGBANG);
+void get_radio_input() {
+  sample_throttle();
+  throttle = map(get_rx_throttle(), 1000, 1900, 1000, 2000);
+  angles_setpoint.roll = map(get_rx_roll(), 1000, 2000, -20, 20);
+  angles_setpoint.pitch = map(get_rx_pitch(), 1000, 2000, -20, 20);
+  rates_setpoint.yaw = map(get_rx_yaw(), 1000, 2000, -45, 45);
 }
 
-float prev_roll=0, prev_pitch=0, prev_yaw=0;
+void control_loop() {
+  get_angles(angles);
+  get_rates(rates);
+  low_pass_filter(rates, filtered_rates);
+  get_radio_input();
 
-void control_loop()
-{
-    Asset asset = get_asset();
-    roll.input = asset.roll;
-    pitch.input = asset.pitch;
-    roll_F.input = (1-LPFD) * prev_roll + LPFD * asset.roll;
-    pitch_F.input = (1-LPFD) * prev_pitch + LPFD * asset.pitch;
-    yaw.input = (1-LPFD) * prev_yaw + LPFD * asset.yaw;
-    prev_roll = roll_F.input;
-    prev_pitch = pitch_F.input;
-    prev_yaw = yaw.input;
+  #if !DEBUG
+  // Controller not connected: reset state
+  if (get_rx_throttle() == 0) {
+    angles.reset();
+    rates.reset();
+    filtered_rates.reset();
+    rates_setpoint.reset();
+    angles_setpoint.reset();
+    throttle = 0;
 
-    sample_throttle();
-    roll.set_point = map(get_rx_roll(), 1000, 2000, -90, 90);
-    pitch.set_point = map(get_rx_pitch(), 1000, 2000, -90, 90);
-    yaw.set_point = map(get_rx_yaw(), 1000, 2000, -90, 90);
-    throttle = map(get_rx_throttle(), 1000, 1900, 1000, 2000);
+    PID_roll_angle.stop();
+    PID_pitch_angle.stop();
+    PID_roll_rate.stop();
+    PID_pitch_rate.stop();
+    PID_yaw_rate.stop();
 
-    // Controller not connected: reset state
-    if (get_rx_throttle() == 0)
-    {
-      roll.reset();
-      pitch.reset();
-      roll_F.reset();
-      pitch_F.reset();
-      yaw.reset();
-      throttle = 0;
-      PID_roll.stop();
-      PID_pitch.stop();
-      PID_roll_F.stop();
-      PID_pitch_F.stop();
-      PID_yaw.stop();
-      set_motor_values(0,0,0,0);
-      return;
-    }
+    int zero[4] = {0,0,0,0};
+    set_motor_values(zero);
+    return;
+  }
+  #endif
 
-    PID_roll.run();
-    PID_pitch.run();
-    PID_roll_F.run();
-    PID_pitch_F.run();
-    PID_yaw.run();
-    
-    // Mixer
-    int m0_val = throttle + (roll.output+roll_F.output) + (pitch.output+pitch_F.output) + yaw.output;
-    int m1_val = throttle - (roll.output+roll_F.output) + (pitch.output+pitch_F.output) - yaw.output;
-    int m2_val = throttle + (roll.output+roll_F.output) - (pitch.output+pitch_F.output) - yaw.output;
-    int m3_val = throttle - (roll.output+roll_F.output) - (pitch.output+pitch_F.output) + yaw.output;
+  PID_roll_angle.run();
+  PID_pitch_angle.run();
+  PID_roll_rate.run();
+  PID_pitch_rate.run();
+  PID_yaw_rate.run();
 
-    print_motor_values(m0_val, m1_val, m2_val, m3_val);
+  // Mixer
+  mixer_output[0] = throttle + (rates_output.roll) + (rates_output.pitch) + rates_output.yaw;
+  mixer_output[1] = throttle - (rates_output.roll) + (rates_output.pitch) - rates_output.yaw;
+  mixer_output[2] = throttle + (rates_output.roll) - (rates_output.pitch) - rates_output.yaw;
+  mixer_output[3] = throttle - (rates_output.roll) - (rates_output.pitch) + rates_output.yaw;
 
-    set_motor_values(m0_val, m1_val, m2_val, m3_val);
+  #if DEBUG
+  debug_state();
+  #endif
+
+  #if ENABLE_MOTORS
+  set_motor_values(mixer_output);
+  #endif
+}
+
+void debug_state() {
+  static uint32_t prev_ms = 0;
+  static uint32_t ticks = 0;
+  ticks++;
+  if (millis() - prev_ms < 500)
+    return;
+  prev_ms = millis();
+  Serial.println("======== DEBUG STATE ========");
+  Serial.print("Ticks: ");
+  Serial.println(ticks);
+  ticks = 0;
+  Serial.println("Angles");
+  angles.print();
+  Serial.println("Rates");
+  rates.print();
+  Serial.println("Filtered rates");
+  filtered_rates.print();
+  Serial.println("Rates setpoints");
+  rates_setpoint.print();
+  Serial.println("Angles setpoints");
+  angles_setpoint.print();
+  Serial.print("Throttle: ");
+  Serial.println(throttle);
+  Serial.println("Rates outputs");
+  rates_output.print();
+  Serial.println("Motor outputs");
+  for (int i = 0; i < 4; i++) {
+    Serial.print(mixer_output[i]);
+    Serial.print("  ");
+  }
+  Serial.print("\n");
+}
+
+void low_pass_filter(const Asset& new_asset, Asset& filtered_asset) {
+  static Asset cum;
+  filtered_asset.roll = (1 - LPFD) * new_asset.roll + LPFD * cum.roll;
+  filtered_asset.pitch = (1 - LPFD) * new_asset.pitch + LPFD * cum.pitch;
+  filtered_asset.yaw = (1 - LPFD) * new_asset.yaw + LPFD * cum.yaw;
+  cum.roll = filtered_asset.roll;
+  cum.pitch = filtered_asset.pitch;
+  cum.yaw = filtered_asset.yaw;
 }
