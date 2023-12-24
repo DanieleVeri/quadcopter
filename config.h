@@ -2,9 +2,10 @@
 #define CONFIG_H
 
 // Sensor bias
-#define ROLL_BIAS 0
-#define PITCH_BIAS 0
-#define YAW_BIAS -1.2
+#define ROLL_BIAS 1.04
+#define PITCH_BIAS 0.7
+#define YAW_BIAS -1.5
+#define IMU_TILT -7 * 0.0174533
 
 // PID common
 #define OUT_MINMAX 300
@@ -15,15 +16,15 @@
 #define LPFD 0.9f
 
 // Pid config
-#define ROLL_PID_FKP  3.1
-#define ROLL_PID_KP  0
-#define ROLL_PID_KI  0
-#define ROLL_PID_KD  0
+#define ROLL_PID_FKP 5.0
+#define ROLL_PID_KP 0.0
+#define ROLL_PID_KI  0.5
+#define ROLL_PID_KD  10
 
-#define PITCH_PID_FKP 3.1
-#define PITCH_PID_KP 0
-#define PITCH_PID_KI  0
-#define PITCH_PID_KD  0
+#define PITCH_PID_FKP 5.0
+#define PITCH_PID_KP 0.0
+#define PITCH_PID_KI  0.5
+#define PITCH_PID_KD  10
 
 #define YAW_PID_KP  5
 #define YAW_PID_KI  0

@@ -81,11 +81,12 @@ void print_motor_values(int a, int b, int c, int d)
     static uint32_t prev_ms = millis();
     static uint32_t ticks = 0;
     ticks++;
-    if (millis() - prev_ms < 500) 
+    if (millis() - prev_ms < 1000) 
         return;
     prev_ms = millis();
-    Serial.print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ticks:");
+    Serial.print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ticks:");
     Serial.println(ticks);
+    ticks = 0;
     debug_state();
     Serial.println("motors");
     Serial.println(a);

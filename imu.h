@@ -15,6 +15,10 @@ typedef struct
   float roll, pitch, yaw;
 }Asset;
 
+float get_yaw();
+float get_pitch();
+float get_roll();
+
 Asset get_asset();
 
 #endif
