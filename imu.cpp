@@ -48,6 +48,7 @@ void setup_imu() {
     }
   }
   mpu.verbose(true);
+  mpu.calibrateAccelGyro();
 }
 
 void calib_imu() {
@@ -109,8 +110,13 @@ Asset get_rates(Asset& rates) {
 }
 
 Asset get_angles(Asset& angles) {
+  static uint32_t prev_ms = millis();
+  if (millis() - prev_ms < 10000)
+    return;
   angles.roll = mpu.getPitch() + ROLL_BIAS;
   angles.pitch = -mpu.getRoll() + PITCH_BIAS;
   angles.yaw = mpu.getYaw();
+  angles.roll = angles.roll * cos(IMU_TILT) - angles.pitch * sin(IMU_TILT);
+  angles.pitch = angles.roll * sin(IMU_TILT) + angles.pitch * cos(IMU_TILT);
   return angles;
 }
