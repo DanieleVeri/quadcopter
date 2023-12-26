@@ -10,23 +10,20 @@
 static Asset angles;
 static Asset rates;
 static Asset filtered_rates;
-
-static int throttle;
+static int throttle = 0;
 static Asset angles_setpoint;  // --> radio_input
 static Asset rates_setpoint;   // --> angles_output
-
 static Asset rates_output;
-
-static int mixer_output[4];
+static int mixer_output[4] = { 0, 0, 0, 0 };
 
 // PID controllers
 static AutoPID PID_roll_angle(&angles.roll, &angles_setpoint.roll, &rates_setpoint.roll,
-                             -OUT_MINMAX, OUT_MINMAX,
-                             ROLL_PID_KP, ROLL_PID_KI, ROLL_PID_KD);
+                              -OUT_MINMAX, OUT_MINMAX,
+                              ROLL_PID_KP, ROLL_PID_KI, ROLL_PID_KD);
 
 static AutoPID PID_pitch_angle(&angles.pitch, &angles_setpoint.pitch, &rates_setpoint.pitch,
-                              -OUT_MINMAX, OUT_MINMAX,
-                              PITCH_PID_KP, PITCH_PID_KI, PITCH_PID_KD);
+                               -OUT_MINMAX, OUT_MINMAX,
+                               PITCH_PID_KP, PITCH_PID_KI, PITCH_PID_KD);
 
 static AutoPID PID_roll_rate(&filtered_rates.roll, &rates_setpoint.roll, &rates_output.roll,
                              -OUT_MINMAX, OUT_MINMAX,
@@ -57,57 +54,59 @@ void get_radio_input() {
   sample_throttle();
   throttle = map(get_rx_throttle(), 1000, 1900, 1000, 2000);
   angles_setpoint.roll = map(get_rx_roll(), 1000, 2000, -20, 20);
-  angles_setpoint.pitch = map(get_rx_pitch(), 1000, 2000, -20, 20);
+  angles_setpoint.pitch = map(get_rx_pitch(), 1000, 2000, 20, -20);
   rates_setpoint.yaw = map(get_rx_yaw(), 1000, 2000, -45, 45);
 }
 
 void control_loop() {
-  get_angles(angles);
-  get_rates(rates);
-  low_pass_filter(rates, filtered_rates);
   get_radio_input();
+#if DEBUG
+  const bool radio_connected = true;
+#else
+  const bool radio_connected = (get_rx_throttle() > 0);
+#endif
+  if (radio_connected) {
+    // Update state
+    get_angles(angles);
+    get_rates(rates);
+    low_pass_filter(rates, filtered_rates);
+    // Compute PID
+    PID_roll_angle.run();
+    PID_pitch_angle.run();
+    PID_roll_rate.run();
+    PID_pitch_rate.run();
+    PID_yaw_rate.run();
+    // Mixer
+    mixer_output[0] = throttle + (rates_output.roll) + (rates_output.pitch) + rates_output.yaw;
+    mixer_output[1] = throttle - (rates_output.roll) + (rates_output.pitch) - rates_output.yaw;
+    mixer_output[2] = throttle + (rates_output.roll) - (rates_output.pitch) - rates_output.yaw;
+    mixer_output[3] = throttle - (rates_output.roll) - (rates_output.pitch) + rates_output.yaw;
 
-  #if !DEBUG
-  // Controller not connected: reset state
-  if (get_rx_throttle() == 0) {
+  } else {
+    // Reset state
     angles.reset();
     rates.reset();
     filtered_rates.reset();
     rates_setpoint.reset();
     angles_setpoint.reset();
-    throttle = 0;
-
+    // Reset PID
     PID_roll_angle.stop();
     PID_pitch_angle.stop();
     PID_roll_rate.stop();
     PID_pitch_rate.stop();
     PID_yaw_rate.stop();
-
-    int zero[4] = {0,0,0,0};
-    set_motor_values(zero);
-    return;
+    // Zero mixer output
+    memset(mixer_output, 0, sizeof(int) * 4);
   }
-  #endif
 
-  PID_roll_angle.run();
-  PID_pitch_angle.run();
-  PID_roll_rate.run();
-  PID_pitch_rate.run();
-  PID_yaw_rate.run();
-
-  // Mixer
-  mixer_output[0] = throttle + (rates_output.roll) + (rates_output.pitch) + rates_output.yaw;
-  mixer_output[1] = throttle - (rates_output.roll) + (rates_output.pitch) - rates_output.yaw;
-  mixer_output[2] = throttle + (rates_output.roll) - (rates_output.pitch) - rates_output.yaw;
-  mixer_output[3] = throttle - (rates_output.roll) - (rates_output.pitch) + rates_output.yaw;
-
-  #if DEBUG
-  debug_state();
-  #endif
-
-  #if ENABLE_MOTORS
+  // Power the motors
+#if !DEBUG
   set_motor_values(mixer_output);
-  #endif
+#endif
+
+#if DEBUG
+  debug_state();
+#endif
 }
 
 void debug_state() {
@@ -127,12 +126,12 @@ void debug_state() {
   rates.print();
   Serial.println("Filtered rates");
   filtered_rates.print();
-  Serial.println("Rates setpoints");
-  rates_setpoint.print();
-  Serial.println("Angles setpoints");
-  angles_setpoint.print();
   Serial.print("Throttle: ");
   Serial.println(throttle);
+  Serial.println("Angles setpoints");
+  angles_setpoint.print();
+  Serial.println("Rates setpoints");
+  rates_setpoint.print();
   Serial.println("Rates outputs");
   rates_output.print();
   Serial.println("Motor outputs");
