@@ -7,12 +7,11 @@
 #define MODE_CALIB_MOTORS 1
 #define MODE_CALIB_IMU 2
 #define OPERATING_MODE MODE_FLIGHT  // <-- set the operating mode
-// Debug switch
-#define DEBUG 1                     // <-- debug mode
+#define DEBUG 0                     // <-- debug mode
 
 // Sensor bias
 #define ROLL_BIAS 0.9
-#define PITCH_BIAS 4.9
+#define PITCH_BIAS 1.5
 #define ROLL_RATE_BIAS 1.04
 #define PITCH_RATE_BIAS 0.7
 #define YAW_RATE_BIAS -1.5
@@ -27,23 +26,23 @@
 #define LPFD 0.2
 
 // Pid config
-#define ROLL_PID_KP 1.0
-#define ROLL_PID_KI 0.0
+#define ROLL_PID_KP 1.5
+#define ROLL_PID_KI 0.5
 #define ROLL_PID_KD 0
 
-#define PITCH_PID_KP 1.0
-#define PITCH_PID_KI 0.0
+#define PITCH_PID_KP 1.5
+#define PITCH_PID_KI 0.5
 #define PITCH_PID_KD 0
 
-#define ROLL_RATE_PID_KP 1.0
+#define ROLL_RATE_PID_KP 1.2
 #define ROLL_RATE_PID_KI 0.0
-#define ROLL_RATE_PID_KD 0
+#define ROLL_RATE_PID_KD 15
 
-#define PITCH_RATE_PID_KP 1.0
+#define PITCH_RATE_PID_KP 1.2
 #define PITCH_RATE_PID_KI 0.0
-#define PITCH_RATE_PID_KD 0
+#define PITCH_RATE_PID_KD 15
 
-#define YAW_RATE_PID_KP 1.0
+#define YAW_RATE_PID_KP 5.0
 #define YAW_RATE_PID_KI 0
 #define YAW_RATE_PID_KD 0
 
