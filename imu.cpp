@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "imu.h"
 #include "config.h"
 #include <math.h>
@@ -97,27 +98,33 @@ void debug_imu() {
   }
 }
 
-Asset get_rates(Asset& rates) {
+void get_rates(Asset& rates) {
   if (mpu.update()) {
     rates.roll = -mpu.getGyroY() + ROLL_RATE_BIAS;
     rates.pitch = -mpu.getGyroX() + PITCH_RATE_BIAS;
     rates.yaw = mpu.getGyroZ() + YAW_RATE_BIAS;  // angular velocity
 
-    rates.roll = rates.roll * cos(IMU_TILT) - rates.pitch * sin(IMU_TILT);
-    rates.pitch = rates.roll * sin(IMU_TILT) + rates.pitch * cos(IMU_TILT);
+    rates.roll = rates.roll * cos(IMU_TO_FRAME_YAW) - rates.pitch * sin(IMU_TO_FRAME_YAW);
+    rates.pitch = rates.roll * sin(IMU_TO_FRAME_YAW) + rates.pitch * cos(IMU_TO_FRAME_YAW);
   }
-  return rates;
 }
 
-Asset get_angles(Asset& angles) {
+void get_angles(Asset& angles) {
   static uint32_t prev_ms = millis();
+  // Waits 10s to be passed before reading the angles
   if (millis() - prev_ms < 10000)
     return;
-  angles.roll = mpu.getPitch() + ROLL_BIAS;
-  angles.pitch = -mpu.getRoll() + PITCH_BIAS;
+  angles.roll = mpu.getPitch() + IMU_TO_FRAME_ROLL;
+  angles.pitch = -mpu.getRoll() + IMU_TO_FRAME_PITCH;
   angles.yaw = mpu.getYaw();
   
-  angles.roll = angles.roll * cos(IMU_TILT) - angles.pitch * sin(IMU_TILT);
-  angles.pitch = angles.roll * sin(IMU_TILT) + angles.pitch * cos(IMU_TILT);
-  return angles;
+  angles.roll = angles.roll * cos(IMU_TO_FRAME_YAW) - angles.pitch * sin(IMU_TO_FRAME_YAW);
+  angles.pitch = angles.roll * sin(IMU_TO_FRAME_YAW) + angles.pitch * cos(IMU_TO_FRAME_YAW);
+}
+
+void get_linear_acc(Linear& acc, const Asset& angles)
+{
+  acc.x = mpu.getAccX() - sin(angles.roll * DEG_TO_RAD);
+  acc.y = mpu.getAccY() + sin(angles.pitch * DEG_TO_RAD);
+  acc.z = mpu.getAccZ();
 }

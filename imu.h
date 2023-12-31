@@ -32,8 +32,32 @@ struct Asset {
 
 };
 
-Asset get_angles(Asset& angles);
+struct Linear {
+  double x, y, z;
+  Linear()
+    : x(0), y(0), z(0) {}
 
-Asset get_rates(Asset& rates);
+  void reset() {
+    x = 0;
+    y = 0;
+    z = 0;
+  }
+
+  void print()
+  {
+    Serial.print(x);
+    Serial.print("    ");
+    Serial.print(y);
+    Serial.print("    ");
+    Serial.println(z);
+  }
+
+};
+
+void get_linear_acc(Linear& acc, const Asset& angles);
+
+void get_angles(Asset& angles);
+
+void get_rates(Asset& rates);
 
 #endif

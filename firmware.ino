@@ -16,6 +16,7 @@ void setup() {
   setup_imu();
   //calib_imu();
   register_radio_interrupt();
+  setup_rangefinder();
   setup_pid();
 #endif
 
