@@ -22,9 +22,6 @@
 #define BANGBANG 300
 #define TIMESTEP 10
 
-// Low pass filter
-#define LPFD 0.2
-
 // Pid config
 #define ROLL_PID_KP 1.1
 #define ROLL_PID_KI 0
@@ -45,6 +42,13 @@
 #define YAW_RATE_PID_KP 5.0
 #define YAW_RATE_PID_KI 0
 #define YAW_RATE_PID_KD 0
+
+// Angular rate low pass filter coefficient
+#define LPFD 0.2
+
+// Smooth fall
+#define SMOOTH_FALL_DIST 10
+#define SMOOTH_FALL_PWM 1350
 
 // Motor pins
 #define PIN_MOTOR_0 6

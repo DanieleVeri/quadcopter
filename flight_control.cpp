@@ -1,3 +1,4 @@
+#include "Servo.h"
 #include "Arduino.h"
 #include "AutoPID.h"
 #include "flight_control.h"
@@ -81,11 +82,11 @@ void control_loop() {
     PID_roll_rate.run();
     PID_pitch_rate.run();
     PID_yaw_rate.run();
-    // Slow fall from higher than 10cm
-    if (ground_dist > 10 && ground_dist < 400)
-      throttle = max(throttle, 1300);
+    // Prevent free fall from more than 10cm
+    if (ground_dist > SMOOTH_FALL_DIST && ground_dist < 400)
+      throttle = max(throttle, SMOOTH_FALL_PWM);
     // Thrust correction by attitude
-    throttle = 1000 + ((float)(throttle - 1000)) / (cos(angles.roll * DEG_TO_RAD) * cos(angles.pitch * DEG_TO_RAD));
+    throttle = MIN_PULSE_LENGTH + ((float)(throttle - MIN_PULSE_LENGTH)) / (cos(angles.roll * DEG_TO_RAD) * cos(angles.pitch * DEG_TO_RAD));
     // Mixer
     mixer_output[0] = throttle + (rates_output.roll) + (rates_output.pitch) + rates_output.yaw;
     mixer_output[1] = throttle - (rates_output.roll) + (rates_output.pitch) - rates_output.yaw;
