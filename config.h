@@ -10,8 +10,8 @@
 #define DEBUG 0                     // <-- disable motors and print debug messages
 
 // Sensor bias
-#define IMU_TO_FRAME_ROLL -10
-#define IMU_TO_FRAME_PITCH 3
+#define IMU_TO_FRAME_ROLL -6.0
+#define IMU_TO_FRAME_PITCH 6.0
 #define IMU_TO_FRAME_YAW -6.0 * DEG_TO_RAD
 #define ROLL_RATE_BIAS 1.04
 #define PITCH_RATE_BIAS 0.7
@@ -23,24 +23,24 @@
 #define TIMESTEP 10
 
 // Low pass filter
-#define LPFD 0.1
+#define LPFD 0.2
 
 // Pid config
-#define ROLL_PID_KP 1
+#define ROLL_PID_KP 1.1
 #define ROLL_PID_KI 0
 #define ROLL_PID_KD 0
 
-#define PITCH_PID_KP 1
+#define PITCH_PID_KP 1.1
 #define PITCH_PID_KI 0
 #define PITCH_PID_KD 0
 
-#define ROLL_RATE_PID_KP 1.1
-#define ROLL_RATE_PID_KI 0.0
-#define ROLL_RATE_PID_KD 0
+#define ROLL_RATE_PID_KP 1
+#define ROLL_RATE_PID_KI 0
+#define ROLL_RATE_PID_KD 0.25
 
-#define PITCH_RATE_PID_KP 1.1
-#define PITCH_RATE_PID_KI 0.0
-#define PITCH_RATE_PID_KD 0
+#define PITCH_RATE_PID_KP 1
+#define PITCH_RATE_PID_KI 0
+#define PITCH_RATE_PID_KD 0.25
 
 #define YAW_RATE_PID_KP 5.0
 #define YAW_RATE_PID_KI 0
