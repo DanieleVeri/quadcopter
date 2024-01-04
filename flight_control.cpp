@@ -5,6 +5,7 @@
 #include "imu.h"
 #include "radio.h"
 #include "motor.h"
+#include "rangefinder.h"
 
 
 // State variables
@@ -12,7 +13,7 @@ static Linear acc;
 static Asset angles;
 static Asset rates;
 static Asset filtered_rates;
-static float ground_dist=0;
+static float ground_dist = 0;
 static int throttle = 0;
 static Asset angles_setpoint;  // --> radio_input
 static Asset rates_setpoint;   // --> angles_output
@@ -56,10 +57,10 @@ void setup_pid() {
 
 void get_radio_input() {
   sample_throttle();
-  throttle = map(get_rx_throttle(), 1000, 1900, 1000, 2000);          // [1000, 2000] pwm
-  angles_setpoint.roll = map(get_rx_roll(), 1000, 2000, -30, 30);     // [-30, 30] deg
-  angles_setpoint.pitch = map(get_rx_pitch(), 1000, 2000, 30, -30);   // [-30, 30] deg
-  rates_setpoint.yaw = map(get_rx_yaw(), 1000, 2000, -45, 45);        // [-45, 45] deg/s
+  throttle = map(get_rx_throttle(), MIN_PULSE_LENGTH, MAX_PULSE_LENGTH, RC_MIN_THROTTLE, RC_MAX_THROTTLE);
+  angles_setpoint.roll = map(get_rx_roll(), MIN_PULSE_LENGTH, MAX_PULSE_LENGTH, -RC_ROLL_BOUND, RC_ROLL_BOUND);
+  angles_setpoint.pitch = map(get_rx_pitch(), MIN_PULSE_LENGTH, MAX_PULSE_LENGTH, RC_PITCH_BOUND, -RC_PITCH_BOUND);
+  rates_setpoint.yaw = map(get_rx_yaw(), MIN_PULSE_LENGTH, MAX_PULSE_LENGTH, -RC_YAW_BOUND, RC_YAW_BOUND);
 }
 
 void control_loop() {
@@ -83,7 +84,7 @@ void control_loop() {
     PID_pitch_rate.run();
     PID_yaw_rate.run();
     // Prevent free fall from more than 10cm
-    if (ground_dist > SMOOTH_FALL_DIST && ground_dist < 400)
+    if (ground_dist > SMOOTH_FALL_DIST && ground_dist < RANGEFINDER_MAX_DIST)
       throttle = max(throttle, SMOOTH_FALL_PWM);
     // Thrust correction by attitude
     throttle = MIN_PULSE_LENGTH + ((float)(throttle - MIN_PULSE_LENGTH)) / (cos(angles.roll * DEG_TO_RAD) * cos(angles.pitch * DEG_TO_RAD));
@@ -166,24 +167,4 @@ void low_pass_filter(const Asset& new_asset, Asset& filtered_asset) {
   cum.roll = filtered_asset.roll;
   cum.pitch = filtered_asset.pitch;
   cum.yaw = filtered_asset.yaw;
-}
-
-void setup_rangefinder() {
-  pinMode(TRIGGER_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
-}
-
-void get_range(float& distance) {
-  static uint32_t prev_ms = 0;
-  // Samplerate 2 Hz
-  if (millis() - prev_ms < 500)
-    return;
-  prev_ms = millis();
-  digitalWrite(TRIGGER_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIGGER_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIGGER_PIN, LOW);
-  auto duration = pulseIn(ECHO_PIN, HIGH);
-  distance = (duration * 0.0343) / 2;
 }

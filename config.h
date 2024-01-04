@@ -9,20 +9,27 @@
 #define OPERATING_MODE MODE_FLIGHT  // <-- set the operating mode
 #define DEBUG 0                     // <-- disable motors and print debug messages
 
+// RC bounds
+#define RC_PITCH_BOUND 30       // [-30, 30] deg
+#define RC_ROLL_BOUND 30        // [-30, 30] deg
+#define RC_YAW_BOUND 45         // [-30, 30] deg/s
+#define RC_MIN_THROTTLE 1000    // pwm
+#define RC_MAX_THROTTLE 2000    // pwm
+
+// Smooth fall
+#define SMOOTH_FALL_DIST 10       // cm
+#define SMOOTH_FALL_PWM 1350      // pwm
+#define RANGEFINDER_MAX_DIST 400  // cm
+
 // Sensor bias
-#define IMU_TO_FRAME_ROLL -6.0
-#define IMU_TO_FRAME_PITCH 6.0
-#define IMU_TO_FRAME_YAW -6.0 * DEG_TO_RAD
-#define ROLL_RATE_BIAS 1.04
-#define PITCH_RATE_BIAS 0.7
-#define YAW_RATE_BIAS -1.5
+#define IMU_TO_FRAME_ROLL -6.0                // deg
+#define IMU_TO_FRAME_PITCH 6.0                // deg
+#define IMU_TO_FRAME_YAW -6.0 * DEG_TO_RAD    // rad
+#define ROLL_RATE_BIAS 1.04                   // deg/s
+#define PITCH_RATE_BIAS 0.7                   // deg/s
+#define YAW_RATE_BIAS -1.5                    // deg/s
 
-// PID common
-#define OUT_MINMAX 300
-#define BANGBANG 300
-#define TIMESTEP 10
-
-// Pid config
+// PID config
 #define ROLL_PID_KP 1.1
 #define ROLL_PID_KI 0
 #define ROLL_PID_KD 0
@@ -31,11 +38,11 @@
 #define PITCH_PID_KI 0
 #define PITCH_PID_KD 0
 
-#define ROLL_RATE_PID_KP 1
+#define ROLL_RATE_PID_KP 0.95
 #define ROLL_RATE_PID_KI 0
 #define ROLL_RATE_PID_KD 0.25
 
-#define PITCH_RATE_PID_KP 1
+#define PITCH_RATE_PID_KP 0.95
 #define PITCH_RATE_PID_KI 0
 #define PITCH_RATE_PID_KD 0.25
 
@@ -43,12 +50,12 @@
 #define YAW_RATE_PID_KI 0
 #define YAW_RATE_PID_KD 0
 
+#define OUT_MINMAX 300
+#define BANGBANG 300
+#define TIMESTEP 10
+
 // Angular rate low pass filter coefficient
 #define LPFD 0.2
-
-// Smooth fall
-#define SMOOTH_FALL_DIST 10
-#define SMOOTH_FALL_PWM 1350
 
 // Motor pins
 #define PIN_MOTOR_0 6
@@ -64,7 +71,7 @@
 #define RX_PIN_AUX1 10
 #define RX_PIN_AUX2 11
 
-// Rangefinder
+// Rangefinder pins
 #define TRIGGER_PIN 45
 #define ECHO_PIN 37
 

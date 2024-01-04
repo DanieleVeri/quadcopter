@@ -3,6 +3,7 @@
 #include "imu.h"
 #include "flight_control.h"
 #include "radio.h"
+#include "rangefinder.h"
 
 
 void setup() {

@@ -21,10 +21,6 @@ struct ControlValues {
   }
 };
 
-void setup_rangefinder();
-
-void get_range(float& distance);
-
 void setup_pid();
 
 void control_loop();
