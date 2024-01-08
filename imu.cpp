@@ -3,8 +3,8 @@
 #include "config.h"
 #include <math.h>
 
-static MPU9250 mpu;
 
+static MPU9250 mpu;
 
 static void print_calibration() {
   Serial.println("< calibration parameters >");
@@ -42,7 +42,7 @@ void setup_imu() {
   Wire.begin();
   delay(2000);
 
-  if (!mpu.setup(0x68)) {  // change to your own address
+  if (!mpu.setup(0x68)) {
     while (1) {
       Serial.println("MPU connection failed. Please check your connection with `connection_check` example.");
       delay(5000);
@@ -97,33 +97,44 @@ void debug_imu() {
   }
 }
 
-void get_rates(Asset& rates) {
-  if (mpu.update()) {
-    rates.roll = -mpu.getGyroY() + ROLL_RATE_BIAS;
-    rates.pitch = -mpu.getGyroX() + PITCH_RATE_BIAS;
-    rates.yaw = mpu.getGyroZ() + YAW_RATE_BIAS;  // angular velocity
-
-    rates.roll = rates.roll * cos(IMU_TO_FRAME_YAW) - rates.pitch * sin(IMU_TO_FRAME_YAW);
-    rates.pitch = rates.roll * sin(IMU_TO_FRAME_YAW) + rates.pitch * cos(IMU_TO_FRAME_YAW);
-  }
+void get_rates(Attitude& rates) {
+  if (!mpu.update())
+    return;
+  // In my setup the IMU is mounted reversed !!
+  rates.roll = -mpu.getGyroY() + ROLL_RATE_BIAS;
+  rates.pitch = -mpu.getGyroX() + PITCH_RATE_BIAS;
+  rates.yaw = mpu.getGyroZ() + YAW_RATE_BIAS;
+  // Apply 2D rotation (imu to frame)
+  const float sin_yaw = sin(IMU_TO_FRAME_YAW * DEG_TO_RAD);
+  const float cos_yaw = cos(IMU_TO_FRAME_YAW * DEG_TO_RAD);
+  rates.roll = rates.roll * cos_yaw - rates.pitch * sin_yaw;
+  rates.pitch = rates.roll * sin_yaw + rates.pitch * cos_yaw;
 }
 
-void get_angles(Asset& angles) {
-  // static uint32_t prev_ms = millis();
-  // // Waits 10s to be passed before reading the angles
-  // if (millis() - prev_ms < 10000)
-  //   return;
+void get_angles(Attitude& angles) {
+  // In my setup the IMU is mounted reversed !!
   angles.roll = mpu.getPitch() + IMU_TO_FRAME_ROLL;
   angles.pitch = -mpu.getRoll() + IMU_TO_FRAME_PITCH;
   angles.yaw = mpu.getYaw();
-  
-  angles.roll = angles.roll * cos(IMU_TO_FRAME_YAW) - angles.pitch * sin(IMU_TO_FRAME_YAW);
-  angles.pitch = angles.roll * sin(IMU_TO_FRAME_YAW) + angles.pitch * cos(IMU_TO_FRAME_YAW);
+  // Apply 2D rotation (imu to frame)
+  const float sin_yaw = sin(IMU_TO_FRAME_YAW * DEG_TO_RAD);
+  const float cos_yaw = cos(IMU_TO_FRAME_YAW * DEG_TO_RAD);  
+  angles.roll = angles.roll * cos_yaw - angles.pitch * sin_yaw;
+  angles.pitch = angles.roll * sin_yaw + angles.pitch * cos_yaw;
 }
 
-void get_linear_acc(Linear& acc, const Asset& angles)
-{
-  acc.x = mpu.getAccX() - sin(angles.roll * DEG_TO_RAD);
-  acc.y = mpu.getAccY() + sin(angles.pitch * DEG_TO_RAD);
+void get_linear_acc(Linear& acc, const Attitude& angles) {
+  acc.x = mpu.getAccX();
+  acc.y = mpu.getAccY();
   acc.z = mpu.getAccZ();
+  // Apply 3D rotation (attitude to world)
+  const float sin_roll = sin(angles.roll * DEG_TO_RAD);
+  const float cos_roll = cos(angles.roll * DEG_TO_RAD);
+  const float sin_pitch = sin(angles.pitch * DEG_TO_RAD);
+  const float cos_pitch = cos(angles.pitch * DEG_TO_RAD);
+  const float sin_yaw = 0;
+  const float cos_yaw = 1;
+  acc.x = acc.x * cos_yaw * cos_pitch + acc.y * (cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll) + acc.z * (cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll);
+  acc.y = acc.x * sin_yaw * cos_pitch + acc.y * (sin_yaw * sin_pitch * sin_roll - cos_yaw * cos_roll) + acc.z * (sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll);
+  acc.z = acc.x * (-sin_pitch) + acc.y * (cos_pitch * sin_roll) + acc.z * (cos_pitch * cos_roll);
 }

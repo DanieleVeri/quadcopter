@@ -1,4 +1,5 @@
 # Arduino quadcopter
+![img](frame/video.gif)
 A simple quadcopter filght controller designed to work in angle control mode ([diagram](https://docs.px4.io/v1.12/assets/img/mc_control_arch.21116ef0.jpg)).  
 All parameters are grouped in `config.h`.  
 Switch `OPERATING_MODE` to perform ESC calibration and IMU calibration.  
@@ -30,3 +31,7 @@ Arduino libraries:
 
 ![img](frame/top.jpg)
 ![img](frame/bottom.jpg)
+
+## TODO:
+- test altitude control
+- include reversed imu in rotation

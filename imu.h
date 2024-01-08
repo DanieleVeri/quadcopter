@@ -10,9 +10,9 @@ void calib_imu();
 
 void debug_imu();
 
-struct Asset {
+struct Attitude {
   double roll, pitch, yaw;
-  Asset()
+  Attitude()
     : roll(0), pitch(0), yaw(0) {}
 
   void reset() {
@@ -54,10 +54,10 @@ struct Linear {
 
 };
 
-void get_linear_acc(Linear& acc, const Asset& angles);
+void get_linear_acc(Linear& acc, const Attitude& angles);
 
-void get_angles(Asset& angles);
+void get_angles(Attitude& angles);
 
-void get_rates(Asset& rates);
+void get_rates(Attitude& rates);
 
 #endif

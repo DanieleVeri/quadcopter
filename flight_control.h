@@ -27,6 +27,6 @@ void control_loop();
 
 void debug_state();
 
-void low_pass_filter(const Asset& new_asset, Asset& filtered_asset);
+void low_pass_filter(const Attitude& new_attitude, Attitude& filtered_attitude);
 
 #endif
