@@ -101,40 +101,40 @@ void get_rates(Attitude& rates) {
   if (!mpu.update())
     return;
   // In my setup the IMU is mounted reversed !!
-  rates.roll = -mpu.getGyroY() + ROLL_RATE_BIAS;
-  rates.pitch = -mpu.getGyroX() + PITCH_RATE_BIAS;
-  rates.yaw = mpu.getGyroZ() + YAW_RATE_BIAS;
+  const float roll = -mpu.getGyroY() + ROLL_RATE_BIAS;
+  const float pitch = -mpu.getGyroX() + PITCH_RATE_BIAS;
   // Apply 2D rotation (imu to frame)
-  const float sin_yaw = sin(IMU_TO_FRAME_YAW * DEG_TO_RAD);
-  const float cos_yaw = cos(IMU_TO_FRAME_YAW * DEG_TO_RAD);
-  rates.roll = rates.roll * cos_yaw - rates.pitch * sin_yaw;
-  rates.pitch = rates.roll * sin_yaw + rates.pitch * cos_yaw;
+  constexpr float sin_yaw = sin(IMU_TO_FRAME_YAW * DEG_TO_RAD);
+  constexpr float cos_yaw = cos(IMU_TO_FRAME_YAW * DEG_TO_RAD);
+  rates.roll = roll * cos_yaw - pitch * sin_yaw;
+  rates.pitch = roll * sin_yaw + pitch * cos_yaw;
+  rates.yaw = mpu.getGyroZ() + YAW_RATE_BIAS;
 }
 
 void get_angles(Attitude& angles) {
   // In my setup the IMU is mounted reversed !!
-  angles.roll = mpu.getPitch() + IMU_TO_FRAME_ROLL;
-  angles.pitch = -mpu.getRoll() + IMU_TO_FRAME_PITCH;
-  angles.yaw = mpu.getYaw();
+  const float roll = mpu.getPitch();
+  const float pitch = -mpu.getRoll();
   // Apply 2D rotation (imu to frame)
-  const float sin_yaw = sin(IMU_TO_FRAME_YAW * DEG_TO_RAD);
-  const float cos_yaw = cos(IMU_TO_FRAME_YAW * DEG_TO_RAD);  
-  angles.roll = angles.roll * cos_yaw - angles.pitch * sin_yaw;
-  angles.pitch = angles.roll * sin_yaw + angles.pitch * cos_yaw;
+  constexpr float sin_yaw = sin(IMU_TO_FRAME_YAW * DEG_TO_RAD);
+  constexpr float cos_yaw = cos(IMU_TO_FRAME_YAW * DEG_TO_RAD);  
+  angles.roll = roll * cos_yaw - pitch * sin_yaw + IMU_TO_FRAME_ROLL;
+  angles.pitch = roll * sin_yaw + pitch * cos_yaw + IMU_TO_FRAME_PITCH;
+  angles.yaw = mpu.getYaw();
 }
 
 void get_linear_acc(Linear& acc, const Attitude& angles) {
-  acc.x = mpu.getAccX();
-  acc.y = mpu.getAccY();
-  acc.z = mpu.getAccZ();
+  const float x = mpu.getAccX();
+  const float y = mpu.getAccY();
+  const float z = mpu.getAccZ();
   // Apply 3D rotation (attitude to world)
-  const float sin_roll = sin(angles.roll * DEG_TO_RAD);
-  const float cos_roll = cos(angles.roll * DEG_TO_RAD);
-  const float sin_pitch = sin(angles.pitch * DEG_TO_RAD);
-  const float cos_pitch = cos(angles.pitch * DEG_TO_RAD);
-  const float sin_yaw = 0;
-  const float cos_yaw = 1;
-  acc.x = acc.x * cos_yaw * cos_pitch + acc.y * (cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll) + acc.z * (cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll);
-  acc.y = acc.x * sin_yaw * cos_pitch + acc.y * (sin_yaw * sin_pitch * sin_roll - cos_yaw * cos_roll) + acc.z * (sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll);
-  acc.z = acc.x * (-sin_pitch) + acc.y * (cos_pitch * sin_roll) + acc.z * (cos_pitch * cos_roll);
+  const float sin_roll = sin(-angles.pitch * DEG_TO_RAD);
+  const float cos_roll = cos(-angles.pitch * DEG_TO_RAD);
+  const float sin_pitch = sin(-angles.roll * DEG_TO_RAD);
+  const float cos_pitch = cos(-angles.roll * DEG_TO_RAD);
+  constexpr float sin_yaw = 0;
+  constexpr float cos_yaw = 1;
+  acc.x = x * cos_yaw * cos_pitch + y * (cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll) + z * (cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll);
+  acc.y = x * sin_yaw * cos_pitch + y * (sin_yaw * sin_pitch * sin_roll - cos_yaw * cos_roll) + z * (sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll);
+  acc.z = x * (-sin_pitch) + y * (cos_pitch * sin_roll) + z * (cos_pitch * cos_roll);
 }

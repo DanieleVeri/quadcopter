@@ -24,12 +24,12 @@
 #define STOP_ALTITUDE_CONTROL_THROTTLE 1600   // pwm
 
 // Sensor bias
-#define IMU_TO_FRAME_ROLL -6.0                // deg
-#define IMU_TO_FRAME_PITCH 6.0                // deg
+#define IMU_TO_FRAME_ROLL 2.0                // deg
+#define IMU_TO_FRAME_PITCH 2.0                // deg
 #define IMU_TO_FRAME_YAW -6.0                 // deg
-#define ROLL_RATE_BIAS 1.04                   // deg/s
-#define PITCH_RATE_BIAS 0.7                   // deg/s
-#define YAW_RATE_BIAS -1.5                    // deg/s
+#define ROLL_RATE_BIAS 0.8                   // deg/s
+#define PITCH_RATE_BIAS 0.9                   // deg/s
+#define YAW_RATE_BIAS -1.3                    // deg/s
 
 // PID config
 #define ROLL_PID_KP 1.1
