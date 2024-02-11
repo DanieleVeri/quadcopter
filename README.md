@@ -33,7 +33,3 @@ Arduino libraries:
 
 ![img](frame/top.jpg)
 ![img](frame/bottom.jpg)
-
-## TODO:
-- test altitude control
-- include reversed imu in rotation
