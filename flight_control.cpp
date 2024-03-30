@@ -61,14 +61,29 @@ void get_radio_input() {
   rates_setpoint.yaw = map(get_rx_yaw(), MIN_PULSE_LENGTH, MAX_PULSE_LENGTH, -RC_YAW_BOUND, RC_YAW_BOUND);
 }
 
+static uint32_t last_connected_ts = 0;
+
 void control_loop() {
-  get_radio_input();
+  sample_throttle();
 #if DEBUG
   const bool radio_connected = true;
 #else
   const bool radio_connected = (get_rx_throttle() > 0);
 #endif
+
+  // Radio input
+  bool lost_signal = false;
   if (radio_connected) {
+    last_connected_ts = millis();
+    get_radio_input();
+  } else {
+    // Allow lost of signal < 1s
+    if (millis() - last_connected_ts > 1000) {
+      lost_signal = true;
+    }
+  }
+
+  if (!lost_signal) {
     // Update state
     get_angles(angles);
     get_linear_acc(acc, angles);
@@ -162,7 +177,7 @@ void debug_state() {
   if (millis() - prev_ms < 500)
     return;
   prev_ms = millis();
-  Serial.println("======== DEBUG STATE ========");
+    Serial.println("======== DEBUG STATE ========");
   Serial.print("Ticks: ");
   Serial.println(ticks);
   ticks = 0;
